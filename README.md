@@ -1,10 +1,5 @@
 # INT8 NPU (8x8 systolic array): double-buffered core, descriptor DMA, ARM/Linux driver
 
-> **Status:** everything below is verified in simulation (`make test`). Nothing has been compiled in Quartus or
-> run on a real DE10-Standard yet, so there are no hardware resource, Fmax or power numbers.
-
-## What is in the box
-
 | Layer | Files | What it is |
 |---|---|---|
 | Compute | `rtl/pe.v`, `rtl/systolic_array.v`, `rtl/npu_core.v` | 8x8 INT8 MAC array; **double-buffered**: two input banks plus an output buffer, so load, compute and output of consecutive tiles overlap. Per-tile bias/shift/ReLU travel with the tile. |
@@ -16,33 +11,30 @@
 
 ## Simulation evidence
 
-All figures are generated from the actual simulation (`make plots`): waveforms come from the VCD dumps, the data
-from the testbench outputs. A small VCD for GTKWave is in `docs/waves/`.
-
 **1. Pipeline occupancy (from the waveform).** The single-buffered core does one stage at a time. The double-buffered core
 loads tile n+1 while tile n computes and tile n-1 streams out: 322 cycles instead of 483 for four K=32 tiles.
 
-![pipeline timeline](docs/01_pipeline_timeline.png)
+<img width="1404" height="645" alt="01_pipeline_timeline" src="https://github.com/user-attachments/assets/ff60f12b-6ca6-48fa-889b-c790ec1a65df" />
 
 **2. Signal-level waveform** of the double-buffered core (3 tiles, K=4). Both input banks fill (`full` = 01 -> 11 -> 10),
 the array computes the first tile while the second is still loading, results are captured into the output buffer and streamed with `tlast`.
 
-![waveform](docs/02_waveform.png)
+<img width="1314" height="802" alt="02_waveform" src="https://github.com/user-attachments/assets/25df4373-7517-43fe-8cbf-e7bba1211094" />
 
 **3. Throughput vs K.** Double buffering helps more as compute grows (1.04x at K=1, 1.76x at K=32) and approaches the
 input-stream limit of 2K cycles per tile. At K=1 there is almost nothing to overlap.
 
-![k sweep](docs/03_k_sweep.png)
+<img width="1206" height="521" alt="03_k_sweep" src="https://github.com/user-attachments/assets/58b9028d-639f-431b-bc7d-386242c6ae1d" />
 
 **4. Bit-exact correctness.** A DDR image built by the C driver code goes through the DMA and the NPU RTL; all 4096 output
 bytes of 64 random tiles (random K, shift, ReLU, bias) equal the C reference. The histogram shows saturation at both ends and ReLU zeros were exercised.
 
-![correctness](docs/04_correctness.png)
+<img width="1414" height="555" alt="04_correctness" src="https://github.com/user-attachments/assets/be20e3a3-4b64-49f7-9431-c50e996ff670" />
 
 **5. DMA run.** 64 tiles through the descriptor DMA: 76 cycles/tile with random K and a memory model that injects 25% wait states.
 Reads (descriptors + operands) dominate the port traffic, which is why the DMA, not the array, limits throughput.
 
-![dma activity](docs/05_dma_activity.png)
+<img width="1185" height="521" alt="05_dma_activity" src="https://github.com/user-attachments/assets/f7a9e15b-017e-4a60-b464-db3ed523a9dd" />
 
 ## Verification results (`make test`, Icarus Verilog)
 
