@@ -1,0 +1,5 @@
+sim/
+sw/npu_demo
+sw/gen_vectors
+*.vcd
+!docs/waves/*.vcd
