@@ -1,10 +1,5 @@
 # INT8 NPU (8x8 systolic array): double-buffered core, descriptor DMA, ARM/Linux driver
 
-> **Status:** everything below is verified in simulation (`make test`). Nothing has been compiled in Quartus or
-> run on a real DE10-Standard yet, so there are no hardware resource, Fmax or power numbers.
-
-## What is in the box
-
 | Layer | Files | What it is |
 |---|---|---|
 | Compute | `rtl/pe.v`, `rtl/systolic_array.v`, `rtl/npu_core.v` | 8x8 INT8 MAC array; **double-buffered**: two input banks plus an output buffer, so load, compute and output of consecutive tiles overlap. Per-tile bias/shift/ReLU travel with the tile. |
